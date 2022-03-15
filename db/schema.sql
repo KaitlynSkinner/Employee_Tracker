@@ -6,32 +6,29 @@ CREATE TABLE department (
 
 /* Roles Table */
 CREATE TABLE roles (
-  id INTEGER NOT NULL AUTO_INCREMENT,
+  id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
   role_title VARCHAR(30) NOT NULL,
-  salary DECIMAL(10,2) NOT NULL,
+  salary DECIMAL NOT NULL,
   department_id INTEGER,
   -- Sets relationship between roles table and department table --
-  CONSTRAINT
-  FOREIGN KEY (department)
+  FOREIGN KEY (department_id)
   REFERENCES department(id)
   ON DELETE SET NULL
 );
 
 /* Employee Table */
 CREATE TABLE employee (
-  id INTEGER NOT NULL AUTO_INCREMENT,
+  id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
   first_name VARCHAR(30) NOT NULL,
   last_name VARCHAR(30) NOT NULL,
   role_id INTEGER NOT NULL,
   manager_id INTEGER,
-  -- Sets relationship between role table and department table --
-  FOREIGN KEY (department)
-  REFERENCES department(id)
-  ON DELETE SET NULL
-    FOREIGN KEY (role_id)
+  -- Sets relationship between roles table, department table, and employee table --
+  CONSTRAINT fk_role
+  FOREIGN KEY (role_id)
   REFERENCES roles(id)
-  ON DELETE SET NULL
-    FOREIGN KEY (manager_id)
-  REFERENCES manager(id)
+  ON DELETE CASCADE,
+  FOREIGN KEY (manager_id)
+  REFERENCES employee(id)
   ON DELETE SET NULL
 );

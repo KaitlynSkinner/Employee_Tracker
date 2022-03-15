@@ -1,7 +1,7 @@
-DROP DATABASE IF EXISTS employee_db;
-CREATE DATABASE employee;
+DROP DATABASE IF EXISTS business;
+CREATE DATABASE business;
 
-USE employee;
+USE business;
 
 /* 
 You might want to use a separate file 
