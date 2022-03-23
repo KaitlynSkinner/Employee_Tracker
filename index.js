@@ -47,6 +47,10 @@ const optionMenu = () => {
             addEmployee();
         } else if (res.begin === 'Update Employee Role') {
             updateEmployeeRole();
+        } else if (res.begin === 'View Employees By Manager') {
+            viewEmployeesByManager();
+        } else if (res.begin === 'Update Employee Managers') {
+            updateEmployeeManager();
         } else if (res.begin === 'View All Roles') {
             viewAllRoles();
         } else if (res.begin === 'Add Role') {
@@ -125,28 +129,34 @@ const addEmployee = () => {
                 }
             }
         },
-        //manager id
+        //employee's manager id/name
         {
             type: 'input',
-            name: 'employeeRole',
-            message: "What is the employee's role?",
-            validate: employeeRole => {
-                if (employeeRole) {
+            name: 'managerId',
+            message: "What is the manager's id?",
+            validate: managerId => {
+                if (managerId) {
                     return true;
                 } else {
-                    console.log("Please enter the employee's role!");
+                    console.log("Please enter the manager's id!");
                     return false;
                 }
             }
         },
-        // take back to main menu
+        // Add new employee to employee table and take back to main menu
         ])
         .then(answers => {
-            let employee = new Employee(answers.firstName, answers.lastName, answers.employeeRole);
-            addEmployee.push(employee);
+            db.query("INSERT INTO employee SET ?",
+            {
+                first_name: answers.firstName,
+                last_name: answers.lastName,
+                role_id: answers.employeeRole,
+                manager_id: answers.managerId
+            })
+            console.table(answers)
             optionMenu();
-        })
-}
+        });
+};
 
 // c) user selects Update Employee Role option
 const updateEmployeeRole = () => {
@@ -155,12 +165,12 @@ const updateEmployeeRole = () => {
         {
             type: 'input',
             name: 'selectedEmployee',
-            message: "Which employee's role do you want to update?",
+            message: "What is the first name of the employee who's role you want to update?",
             validate: selectedEmployee => {
                 if (selectedEmployee) {
                     return true;
                 } else {
-                    console.log("Please enter the employee's role you wish to update !");
+                    console.log("Please enter the first name of the employee who's role you wish to update!");
                     return false;
                 }
             }
@@ -179,13 +189,82 @@ const updateEmployeeRole = () => {
                 }
             }
         },
-        // take back to main menu
+        // Update employee name and role in employee table, and take back to main menu
         ])
         .then(answers => {
-            let employee = new Employee(answers.selectedEmployee, answers.selectedEmployeeRole);
-            updateEmployeeRoleArr.push(employee);
+            db.query("UPDATE employee SET WHERE ?",
+            {
+                first_name: answers.selectedEmployee
+            },
+            {
+                role_id: answers.selectedEmployeeRole
+            })
+            console.table(answers)
             optionMenu();
-        })
+        });
+}
+
+// View employees by manager.
+const viewEmployeesByManager = (cTable) => {
+    const query = `SELECT E.id AS id, E.first_name AS first_name, E.last_name AS last_name, role_title AS role, department_name AS department, salary AS salary, 
+                CONCAT(E.first_name, " ", E.last_name) AS manager
+                FROM employee AS E
+                LEFT JOIN roles AS R ON E.role_id = R.id
+                LEFT JOIN department AS D ON R.department_id = D.id
+                LEFT JOIN employee AS M ON E.manager_id = M.id
+                GROUP BY id ORDER BY id ASC;`
+    db.query(query, (err, res) => {
+        if (err) throw err;
+        console.table(res);
+        optionMenu();
+    });
+};
+
+
+// Update employee managers.
+const updateEmployeeManager = () => {
+    inquirer.prompt([
+        // which employee 
+        {
+            type: 'input',
+            name: 'selectEmployee',
+            message: "What is the first name of the employee who's manager you want to update?",
+            validate: selectEmployee => {
+                if (selectEmployee) {
+                    return true;
+                } else {
+                    console.log("Please enter the first name of the employee who's role you wish to update!");
+                    return false;
+                }
+            }
+        },
+        // new manager
+        {
+            type: 'input',
+            name: 'selectedEmployeeManager',
+            message: 'Which manager do you want to assign the selected employee?',
+            validate: selectedEmployeeManager => {
+                if (selectedEmployeeManager) {
+                    return true;
+                } else {
+                    console.log('Please enter the manager you wish to assign the selected employee!');
+                    return false;
+                }
+            }
+        },
+        // Update employee name and manager in employee table, and take back to main menu
+        ])
+        .then(answers => {
+            db.query("UPDATE employee SET WHERE ?",
+            {
+                first_name: answers.selectEmployee
+            },
+            {
+                manager_id: answers.selectedEmployeeManager
+            })
+            console.table(answers)
+            optionMenu();
+        });
 }
 
 // ---------------------------------------
@@ -237,18 +316,30 @@ const addRole = () => {
         },
         // options ofor which department the role belongs to
         {
-            type: 'list',
+            type: 'input',
             name: 'roleDepartment',
-            message: 'Which department does the role belong to?',
-            choices: [ 'Engineering', 'Finance', 'Legal', 'Sales', 'Service' ]
+            message: 'What is the name of the department this role belongs to?',
+            validate: roleDepartment => {
+                if (roleDepartment) {
+                    return true;
+                } else {
+                    console.log('Please enter the name of the department the role belongs to!');
+                    return false;
+                }
+            }
         }
-        // take back to main menu
+        // add new role to roles table, and take back to main menu
         ])
         .then(answers => {
-            let role = new Role(answers.roleName, answers.roleSalary, answers.roleDepartment);
-            addRoleArr.push(role);
+            db.query("INSERT INTO roles SET ?",
+            {
+                role_title: answers.roleName,
+                salary: answers.roleSalary,
+                department_id: answers.roleDepartment
+            })
+            console.table(answers)
             optionMenu();
-        })
+        });
 }
 
 // ---------------------------------------
@@ -281,13 +372,14 @@ const addDepartment = () => {
                 }
             }
         }
-        // confirmation message? do I need to include - does system include?
-
-        // take back to main menu
+        // Add new department name to department table, and take back to main menu
         ])
         .then(answers => {
-            let department = new Department(answers.department, answers.departmentName);
-            addDepartmentArr.push(departmentName);
+            db.query("INSERT INTO department SET ?",
+            {
+                department_name: answers.dapartmentName,
+            })
+            console.table(answers)
             optionMenu();
         });
 }
@@ -301,18 +393,9 @@ const quitApp = () => {
         width: 80,
         whitespaceBreak: true
     }));
-    connection.end();
+    //connection.end();
+    process.exit();
 };
-
-// call function
-
-
-// Try to add some additional functionality to your application, 
-// such as the ability to do the following:
-
-//Update employee managers.
-
-//View employees by manager.
 
 //View employees by department.
 
