@@ -2,19 +2,27 @@
 const inquirer = require('inquirer');
 // Require figlet for console.log text
 const figlet = require('figlet');
-// Require MySQL2 client for Node.js
-const mysql = require('mysql2');
+// Require console.table to display mySQL tables
+const cTable = require('console.table');
+// Require connection.js file
+const db = require('./db/connection');
+
+console.log(figlet.textSync('Employee Tracker!', {
+    font: 'Invita',
+    horizontalLayout: 'default',
+    verticalLayout: 'default',
+    width: 80,
+    whitespaceBreak: true
+}));
+
+// Connect to the database
+db.connect((err) => {
+    if (err) throw err;
+    optionMenu();
+});
 
 // Begin the app function
 const optionMenu = () => {
-    console.log(figlet.textSync('Employee Tracker!', {
-        font: 'Invita',
-        horizontalLayout: 'default',
-        verticalLayout: 'default',
-        width: 80,
-        whitespaceBreak: true
-    }));
-
     inquirer
     .prompt([
         //Begin This Application, or not 
@@ -23,7 +31,7 @@ const optionMenu = () => {
             name: 'start',
             message: 'Please hit "RETURN/ENTER" to generate an Employee team. If you wish to exit please hit "Ctrl+C".',
         },
-        // options on what user would  like to do when commencing application 
+        // options on what user would like to do when commencing application 
         {
             type: 'list',
             name: 'begin',
@@ -31,31 +39,45 @@ const optionMenu = () => {
             choices: [ 'View all Employees', 'Add Employee', 'Update Employee Role', 'View All Roles', 'Add Role', 'View All Departments', 'Add Department', 'Quit' ]
         }
     ])
-    .then(answers => {
-        console.log(answers.begin);
-        if (answers.begin === 'View all Employees') {
+    .then(res => {
+        console.log(res.begin);
+        if (res.begin === 'View all Employees') {
             viewAllEmployees();
-        } else if (answers.begin === 'Add Employee') {
+        } else if (res.begin === 'Add Employee') {
             addEmployee();
-        } else if (answers.begin === 'Update Employee Role') {
+        } else if (res.begin === 'Update Employee Role') {
             updateEmployeeRole();
-        } else if (answers.begin === 'View All Roles') {
+        } else if (res.begin === 'View All Roles') {
             viewAllRoles();
-        } else if (answers.begin === 'Add Role') {
+        } else if (res.begin === 'Add Role') {
             addRole();
-        } else if (answers.begin === 'View All Departments') {
+        } else if (res.begin === 'View All Departments') {
             viewAllDepartments();
-        } else if (answers.begin === 'addDepartment') {
+        } else if (res.begin === 'addDepartment') {
             addDepartment();
-        } else if (answers.begin === 'Quit') {
+        } else if (res.begin === 'Quit') {
             quitApp();
         }
-});
+    });
 }
 
+// ---------------------------------------
+// EMPLOYEES
+// ---------------------------------------
 // a) user selects View All Employees option:
-const viewAllEmployees = () => {
-    console.table(employee);
+const viewAllEmployees = (cTable) => {
+    const query = `SELECT E.id AS id, E.first_name AS first_name, E.last_name AS last_name, role_title AS role, department_name AS department, salary AS salary, 
+                CONCAT(E.first_name, " ", E.last_name) AS manager
+                FROM employee AS E
+                LEFT JOIN roles AS R ON E.role_id = R.id
+                LEFT JOIN department AS D ON R.department_id = D.id
+                LEFT JOIN employee AS M ON E.manager_id = M.id
+                GROUP BY id ORDER BY id ASC;`
+    db.query(query, (err, res) => {
+        if (err) throw err;
+        console.table(res);
+        optionMenu();
+    });
 };
 
 // b) user selects Add Employee option
@@ -166,10 +188,21 @@ const updateEmployeeRole = () => {
         })
 }
 
+// ---------------------------------------
+// ROLES
+// ---------------------------------------
 // d) user selects View All Roles option
-const viewAllRoles = () => {
-    console.table(roles);
-}
+const viewAllRoles = (cTable) => {
+    const query = `SELECT R.id AS id, role_title AS role, salary AS salary, department_name AS department
+                FROM roles AS R
+                LEFT JOIN department AS D ON R.department_id = D.id
+                GROUP BY id ORDER BY id ASC;`
+    db.query(query, (err, res) => {
+        if (err) throw err;
+        console.table('View All Roles', res);
+        optionMenu();
+    });
+};
 
 // e) user selects Add Role option
 const addRole = () => {
@@ -218,9 +251,17 @@ const addRole = () => {
         })
 }
 
+// ---------------------------------------
+// DEPARTMENTS
+// ---------------------------------------
 // f) user selects View All Departmetns option
-const viewAllDepartments = () => {
-    console.table(department);
+const viewAllDepartments = (cTable) => {
+    const query = `SELECT * FROM department`;
+    db.query(query, (err, res) => {
+        if (err) throw err;
+        console.table('View All Departmetns', res);
+        optionMenu();
+    });
 }
 
 // g) user selects Add Department option
@@ -252,40 +293,19 @@ const addDepartment = () => {
 }
 
 // h) user selects to Quit Application
-// const quitApp = () => {
-//     inquirer.prompt([
-//         //Quit This Application
-//         {
-//             type: 'input',
-//             name: 'quitApp',
-//             message: 'Would you like to exit the application?',
-//         }
-//     )]
-//     .then(answers => {
-//         console.log(answers.begin);
-//         if (answers.quitApp === 'View all Employees') {
-//             viewAllEmployees();
-//         } else if (answers.quitApp === 'Add Employee') {
-//             addEmployee();
-//         } else if (answers.quitApp === 'Update Employee Role') {
-//             updateEmployeeRole();
-//         } else if (answers.quitApp === 'View All Roles') {
-//             viewAllRoles();
-//         } else if (answers.quitApp === 'Add Role') {
-//             addRole();
-//         } else if (answers.quitApp === 'View All Departments') {
-//             viewAllDepartments();
-//         } else if (answers.quitApp === 'addDepartment') {
-//             addDepartment();
-//         } 
-//         // else {
-      
-//         // }
-//     })
-// };
+const quitApp = () => {
+    console.log(figlet.textSync('Goodbye!', {
+        font: 'Invita',
+        horizontalLayout: 'default',
+        verticalLayout: 'default',
+        width: 80,
+        whitespaceBreak: true
+    }));
+    connection.end();
+};
 
 // call function
-optionMenu()
+
 
 // Try to add some additional functionality to your application, 
 // such as the ability to do the following:

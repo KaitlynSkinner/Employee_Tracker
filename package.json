@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/KaitlynSkinner/Employee_Tracker#readme",
   "dependencies": {
+    "console.table": "^0.10.0",
     "figlet": "^1.5.2",
     "inquirer": "^8.2.1",
     "mysql2": "^2.3.3"
