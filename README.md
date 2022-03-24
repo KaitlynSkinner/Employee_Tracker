@@ -29,7 +29,7 @@ As a business owner I want to be able to view and manage the departments, roles,
 ## Usage
  Once installed, type "node index" to begin. There will be a main menu with many options to choose. There will be a series of instructional prompts to answer within some of the options. For the best result, attentively read the prompts.
   ** **
-  [![Watch the video](https://img.youtube.com/vi/vLUKuyUaj7Q/0.jpg)](https://www.youtube.com/watch?v=vLUKuyUaj7Q)
+  [![Watch the video](https://img.youtube.com/vi/EcCJvMiWxNs/0.jpg)](https://www.youtube.com/watch?v=EcCJvMiWxNs)
 
 ## License
 ![NPM](https://img.shields.io/npm/l/license)
