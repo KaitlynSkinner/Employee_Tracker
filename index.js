@@ -36,7 +36,7 @@ const optionMenu = () => {
             type: 'list',
             name: 'begin',
             message: 'What would you like to do?',
-            choices: [ 'View all Employees', 'Add Employee', 'Update Employee Role', 'View All Roles', 'Add Role', 'View All Departments', 'Add Department', 'Quit' ]
+            choices: [ 'View all Employees', 'Add Employee', 'Update Employee Role', 'View Employees By Manager', 'Update Employee Managers', 'View All Roles', 'Add Role', 'View All Departments', 'Add Department', 'View Employees by Department', 'Quit' ]
         }
     ])
     .then(res => {
@@ -59,6 +59,8 @@ const optionMenu = () => {
             viewAllDepartments();
         } else if (res.begin === 'addDepartment') {
             addDepartment();
+        } else if (res.begin === 'View Employees by Department') {
+            viewEmployeesByDept();
         } else if (res.begin === 'Quit') {
             quitApp();
         }
@@ -68,7 +70,7 @@ const optionMenu = () => {
 // ---------------------------------------
 // EMPLOYEES
 // ---------------------------------------
-// a) user selects View All Employees option:
+// ** View All Employees **
 const viewAllEmployees = (cTable) => {
     const query = `SELECT E.id AS id, E.first_name AS first_name, E.last_name AS last_name, role_title AS role, department_name AS department, salary AS salary, 
                 CONCAT(E.first_name, " ", E.last_name) AS manager
@@ -84,7 +86,7 @@ const viewAllEmployees = (cTable) => {
     });
 };
 
-// b) user selects Add Employee option
+// ** Add Employee ** 
 const addEmployee = () => {
     inquirer.prompt([
         // employee's first name
@@ -158,19 +160,19 @@ const addEmployee = () => {
         });
 };
 
-// c) user selects Update Employee Role option
+// ** Update Employee Role **
 const updateEmployeeRole = () => {
     inquirer.prompt([
         // which employee 
         {
             type: 'input',
-            name: 'selectedEmployee',
-            message: "What is the first name of the employee who's role you want to update?",
+            name: 'id',
+            message: "What is the employee id who's role you want to update?",
             validate: selectedEmployee => {
                 if (selectedEmployee) {
                     return true;
                 } else {
-                    console.log("Please enter the first name of the employee who's role you wish to update!");
+                    console.log("Please enter the employee id who's role you wish to update!");
                     return false;
                 }
             }
@@ -192,11 +194,9 @@ const updateEmployeeRole = () => {
         // Update employee name and role in employee table, and take back to main menu
         ])
         .then(answers => {
-            db.query("UPDATE employee SET WHERE ?",
+            db.query("UPDATE employee SET ? WHERE ?? = ?",
             {
-                first_name: answers.selectedEmployee
-            },
-            {
+                id: answers.id,
                 role_id: answers.selectedEmployeeRole
             })
             console.table(answers)
@@ -204,13 +204,10 @@ const updateEmployeeRole = () => {
         });
 }
 
-// View employees by manager.
+// ** View Employees by Manager **
 const viewEmployeesByManager = (cTable) => {
-    const query = `SELECT E.id AS id, E.first_name AS first_name, E.last_name AS last_name, role_title AS role, department_name AS department, salary AS salary, 
-                CONCAT(E.first_name, " ", E.last_name) AS manager
+    const query = `SELECT E.id AS id, E.first_name AS first_name, E.last_name AS last_name, E.role_id AS role_id, E.manager_id AS id
                 FROM employee AS E
-                LEFT JOIN roles AS R ON E.role_id = R.id
-                LEFT JOIN department AS D ON R.department_id = D.id
                 LEFT JOIN employee AS M ON E.manager_id = M.id
                 GROUP BY id ORDER BY id ASC;`
     db.query(query, (err, res) => {
@@ -220,20 +217,19 @@ const viewEmployeesByManager = (cTable) => {
     });
 };
 
-
-// Update employee managers.
+// ** Update Employee Managers **
 const updateEmployeeManager = () => {
     inquirer.prompt([
         // which employee 
         {
             type: 'input',
-            name: 'selectEmployee',
-            message: "What is the first name of the employee who's manager you want to update?",
-            validate: selectEmployee => {
-                if (selectEmployee) {
+            name: 'id',
+            message: "What is the employee id who's manager you want to update?",
+            validate: id => {
+                if (id) {
                     return true;
                 } else {
-                    console.log("Please enter the first name of the employee who's role you wish to update!");
+                    console.log("Please enter the employee id who's role you wish to update!");
                     return false;
                 }
             }
@@ -255,11 +251,9 @@ const updateEmployeeManager = () => {
         // Update employee name and manager in employee table, and take back to main menu
         ])
         .then(answers => {
-            db.query("UPDATE employee SET WHERE ?",
+            db.query("UPDATE employee SET ? WHERE ?? = ?",
             {
-                first_name: answers.selectEmployee
-            },
-            {
+                id: answers.id,
                 manager_id: answers.selectedEmployeeManager
             })
             console.table(answers)
@@ -345,7 +339,7 @@ const addRole = () => {
 // ---------------------------------------
 // DEPARTMENTS
 // ---------------------------------------
-// f) user selects View All Departmetns option
+// ** View All Departmetns **
 const viewAllDepartments = (cTable) => {
     const query = `SELECT * FROM department`;
     db.query(query, (err, res) => {
@@ -355,7 +349,7 @@ const viewAllDepartments = (cTable) => {
     });
 }
 
-// g) user selects Add Department option
+// ** Add Department **
 const addDepartment = () => {
     inquirer.prompt([
         // Department name
@@ -384,7 +378,22 @@ const addDepartment = () => {
         });
 }
 
-// h) user selects to Quit Application
+// ** View Employees by Department **
+const viewEmployeesByDept = (cTable) => {
+    const query = `SELECT E.id AS id, E.first_name AS first_name, E.last_name AS last_name, role_title AS role, department_name AS department, salary AS salary, 
+                CONCAT(E.first_name, " ", E.last_name) AS manager
+                FROM employee AS E
+                LEFT JOIN department AS D ON R.department_id = D.id
+                GROUP BY department_id ORDER BY department_id ASC;`
+    db.query(query, (err, res) => {
+        if (err) throw err;
+        console.table(res);
+        optionMenu();
+    });
+};
+
+
+// ** Quit Application **
 const quitApp = () => {
     console.log(figlet.textSync('Goodbye!', {
         font: 'Invita',
@@ -397,10 +406,7 @@ const quitApp = () => {
     process.exit();
 };
 
-//View employees by department.
-
 //Delete departments, roles, and employees.
 
 //View the total utilized budget of a department—in other words, 
 //the combined salaries of all employees in that department.
-
